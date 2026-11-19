@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bucin Space ✨ - Zona Gabut & Bucin</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Quicksand -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for Heart Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        cute: ['"Quicksand"', 'sans-serif'],
+                    },
+                    colors: {
+                        pastel: {
+                            pink: '#FFE4EC',
+                            rose: '#FF8FAB',
+                            deep: '#FB6F92',
+                            lavender: '#E2D1F9',
+                            cream: '#FFF9FB',
+                        }
+                    },
+                    animation: {
+                        'float-slow': 'float 6s ease-in-out infinite',
+                        'pulse-soft': 'pulseSoft 2.5s infinite',
+                        'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'stamp': 'stampAnim 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-12px) rotate(3deg)' },
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.04)' },
+                        },
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.85) translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+                        },
+                        stampAnim: {
+                            '0%': { opacity: '0', transform: 'scale(2.5) rotate(-25deg)' },
+                            '70%': { opacity: '1', transform: 'scale(0.95) rotate(-12deg)' },
+                            '100%': { opacity: '1', transform: 'scale(1) rotate(-14deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Glassmorphism & Background Styling */
+        body {
+            background: linear-gradient(135deg, #FFF0F5 0%, #F3E8FF 50%, #FFE4E6 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #4A354F;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 12px 32px -4px rgba(251, 111, 146, 0.14), 0 4px 12px -2px rgba(168, 85, 247, 0.06);
+        }
+
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* Floating Background Hearts */
+        .bg-heart {
+            position: fixed;
+            bottom: -10vh;
+            pointer-events: none;
+            z-index: 0;
+            animation: riseUp linear forwards;
+            opacity: 0.45;
+        }
+
+        @keyframes riseUp {
+            0% {
+                transform: translateY(0) scale(0.8) rotate(0deg);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.5;
+            }
+            85% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateY(-115vh) scale(1.2) rotate(35deg);
+                opacity: 0;
+            }
+        }
+
+        /* Hide scrollbar for horizontal tab navigation on mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Card Flip / Transition Effect for Gombalan */
+        .gombal-transition {
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+        }
+        .gombal-flip-out {
+            transform: scale(0.92) rotateY(15deg);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-pink-200 selection:text-pink-900 relative">
+
+    <!-- Container untuk animasi hati melayang di latar belakang -->
+    <div id="floating-hearts-container" class="fixed inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+    <!-- Custom Toast Notification (Pengganti alert) -->
+    <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
+        <div class="glass-card px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg border-pink-200">
+            <span id="toast-icon" class="text-lg">💖</span>
+            <span id="toast-message" class="text-sm font-semibold text-pink-900">Tersalin ke clipboard!</span>
+        </div>
+    </div>
+
+    <!-- Tombol Toggle Sound & Reset Nama di Pojok Atas -->
+    <header class="relative z-20 max-w-2xl mx-auto pt-4 px-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 glass-pill px-3.5 py-1.5 rounded-full shadow-sm">
+            <span class="text-lg animate-bounce">💌</span>
+            <span class="font-cute font-bold text-sm tracking-tight text-pink-600">BucinSpace</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Tombol Ganti Nama Pasangan -->
+            <button id="edit-name-btn" onclick="openWelcomeModal()" class="hidden glass-pill hover:bg-white/90 text-xs font-semibold text-purple-700 px-3.5 py-2 rounded-full transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                <span>✏️</span>
+                <span id="header-target-name">Sayang</span>
+            </button>
+
+            <!-- Tombol Sound FX (Web Audio API) -->
+            <button id="sound-toggle-btn" onclick="toggleSound()" title="Efek Suara Lucu" class="glass-pill hover:bg-white/90 p-2 rounded-full text-pink-600 transition shadow-sm active:scale-95">
+                <svg id="sound-on-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                </svg>
+                <svg id="sound-off-icon" class="w-4 h-4 hidden text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         HALAMAN PEMBUKA (WELCOME / PERSONALIZATION)
+    =========================================== -->
+    <section id="welcome-screen" class="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12 flex flex-col items-center justify-center min-h-[82vh]">
+        <div class="glass-card w-full rounded-3xl p-7 sm:p-8 text-center animate-pop-in">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-pink-400 to-purple-400 flex items-center justify-center text-4xl shadow-lg shadow-pink-300/50 animate-float-slow">
+                🧸
+            </div>
+            
+            <span class="inline-block px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-xs font-bold tracking-wide mb-2">
+                EDISI GABUT TAPI KANGEN
+            </span>
+            
+            <h1 class="font-cute text-2xl sm:text-3xl font-bold text-gray-800 mb-2 leading-tight">
+                Hai, Ada yang Lagi Gabut Nih! ✨
+            </h1>
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                Biar makin gemes dan personal, masukin nama panggilan <span class="font-semibold text-pink-600">ayank / gebetan</span> kamu dulu yuk (atau langsung masuk aja).
+            </p>
+
+            <form id="welcome-form" onsubmit="startApp(event)" class="space-y-4">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="partner-name-input" 
+                        placeholder="Contoh: Sayang, Ayang, Mas Ganteng..." 
+                        maxlength="24"
+                        class="w-full px-4 py-3.5 rounded-2xl bg-white/80 border-2 border-pink-200 focus:border-pink-400 focus:outline-none text-center font-semibold text-gray-700 placeholder:text-gray-400 placeholder:font-normal transition shadow-inner"
+                    >
+                </div>
+
+                <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-400 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold text-base shadow-lg shadow-pink-400/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+                    <span>Masuk ke Zona Bucin</span>
+                    <span>🚀💖</span>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         MAIN INTERACTIVE WORKSPACE
+    =========================================== -->
+    <main id="main-app" class="hidden relative z-10 max-w-2xl mx-auto px-4 pt-4 pb-16">
+        
+        <!-- Greeting Banner -->
+        <div class="text-center mb-5 animate-pop-in">
+            <h2 class="font-cute text-xl sm:text-2xl font-bold text-gray-800">
+                Spesial Buat <span class="target-name-display text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">Sayang</span> 💕
+            </h2>
+            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Pilih menu gabut di bawah ini, awas senyum-senyum sendiri!</p>
+        </div>
+
+        <!-- Navigation Tabs (Scrollable on tiny screens, centered grid on desktop) -->
+        <nav class="glass-card p-1.5 rounded-2xl mb-6 flex overflow-x-auto no-scrollbar gap-1.5 justify-between">
+            <button onclick="switchTab('gombal')" id="tab-btn-gombal" class="tab-btn flex-1 min-w-[110px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-md">
+                <span>💘</span>
+                <span>Gombalan</span>
+            </button>
+            <button onclick="switchTab('jebakan')" id="tab-btn-jebakan" class="tab-btn flex-1 min-w-[110px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-gray-600 hover:bg-white/60">
+                <span>🏃‍♂️</span>
+                <span>Jebakan</span>
+            </button>
+            <button onclick="switchTab('kupon')" id="tab-btn-kupon" class="tab-btn flex-1 min-w-[110px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-gray-600 hover:bg-white/60">
+                <span>🎟️</span>
+                <span>Kupon Cinta</span>
+            </button>
+            <button onclick="switchTab('meter')" id="tab-btn-meter" class="tab-btn flex-1 min-w-[110px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-gray-600 hover:bg-white/60">
+                <span>🌡️</span>
+                <span>Cek Bucin</span>
+            </button>
+        </nav>
+
+        <!-- ==========================================
+             TAB A: GOMBALAN GENERATOR
+        =========================================== -->
+        <section id="panel-gombal" class="tab-panel animate-pop-in">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 text-center">
+                <!-- Category Filter Pills -->
+                <div class="flex flex-wrap justify-center gap-2 mb-6">
+                    <button onclick="setGombalCategory('semua')" data-cat="semua" class="gombal-cat-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-pink-500 text-white shadow-sm transition">
+                        ✨ Semua Tipe
+                    </button>
+                    <button onclick="setGombalCategory('receh')" data-cat="receh" class="gombal-cat-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition">
+                        🧀 Receh Abis
+                    </button>
+                    <button onclick="setGombalCategory('puitis')" data-cat="puitis" class="gombal-cat-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition">
+                        🌙 Puitis & Soft
+                    </button>
+                    <button onclick="setGombalCategory('maut')" data-cat="maut" class="gombal-cat-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition">
+                        🔥 Rayuan Maut
+                    </button>
+                </div>
+
+                <!-- Card Display -->
+                <div id="gombal-card-box" class="gombal-transition relative bg-gradient-to-br from-white/90 to-pink-50/90 border-2 border-pink-100 rounded-2xl p-6 sm:p-8 min-h-[190px] flex flex-col items-center justify-center shadow-inner mb-6">
+                    <span id="gombal-badge" class="absolute top-3.5 left-4 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-600">
+                        🧀 Receh Abis
+                    </span>
+                    <span class="text-3xl mb-3">💌</span>
+                    <p id="gombal-text" class="font-cute text-lg sm:text-xl font-bold text-gray-800 leading-relaxed">
+                        "Sayang, kamu tahu nggak bedanya kamu sama WiFi? Kalau WiFi nyambungnya ke HP, kalau kamu nyambungnya langsung ke masa depan aku."
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button onclick="generateGombalan()" class="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-pink-300/40 transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span>🎲</span>
+                        <span>Gombalin Lagi Dong!</span>
+                    </button>
+                    <button onclick="copyGombalan()" class="py-3.5 px-5 rounded-2xl bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 font-bold text-sm shadow-sm transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span>📋</span>
+                        <span>Copy Buat Chat</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB B: PERTANYAAN JEBAKAN (TOMBOL KABUR)
+        =========================================== -->
+        <section id="panel-jebakan" class="tab-panel hidden animate-pop-in">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 text-center">
+                <!-- Question Selector -->
+                <div class="flex justify-center gap-2 mb-5">
+                    <button onclick="changeTrapQuestion(0)" class="trap-q-btn px-3 py-1 rounded-full text-xs font-bold bg-purple-500 text-white transition">Soal 1</button>
+                    <button onclick="changeTrapQuestion(1)" class="trap-q-btn px-3 py-1 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition">Soal 2</button>
+                    <button onclick="changeTrapQuestion(2)" class="trap-q-btn px-3 py-1 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition">Soal 3</button>
+                </div>
+
+                <!-- Arena Jebakan -->
+                <div id="trap-arena" class="relative w-full h-[320px] sm:h-[340px] bg-gradient-to-b from-white/80 to-pink-50/70 rounded-2xl border-2 border-dashed border-pink-200 p-5 flex flex-col items-center justify-between overflow-hidden select-none">
+                    
+                    <!-- Question Header -->
+                    <div class="z-10 mt-2">
+                        <div id="trap-emoji" class="text-5xl mb-2 animate-float-slow">🥺👉👈</div>
+                        <h3 id="trap-question-text" class="font-cute text-xl sm:text-2xl font-bold text-gray-800 px-2">
+                            Sayang, kamu sayang banget sama aku nggak?
+                        </h3>
+                        <p id="trap-subtext" class="text-xs text-pink-500 font-medium mt-1">Jawab jujur ya, dilarang bohong!</p>
+                    </div>
+
+                    <!-- Success State Overlay (Muncul setelah klik IYA) -->
+                    <div id="trap-success-box" class="hidden absolute inset-0 z-30 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-pop-in">
+                        <div class="text-6xl mb-3 animate-bounce">🥰💖🎉</div>
+                        <h4 class="font-cute text-2xl font-bold text-pink-600 mb-2">Yeay! Aku Juga Sayang Banget!</h4>
+                        <p id="trap-success-msg" class="text-sm text-gray-600 max-w-sm mb-5 leading-relaxed">
+                            Tuh kan, emang nggak ada pilihan lain selain sayang sama aku. Makasih udah jadi alasan senyum aku hari ini!
+                        </p>
+                        <button onclick="resetTrapArena()" class="px-5 py-2.5 rounded-xl bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold text-xs transition">
+                            🔄 Ulangi Pertanyaan
+                        </button>
+                    </div>
+
+                    <!-- Buttons Area -->
+                    <div class="w-full flex items-center justify-center gap-6 mb-4 z-20">
+                        <!-- Tombol IYA (Akan membesar tiap kali tombol Nggak kabur) -->
+                        <button id="btn-yes" onclick="handleYesClick()" style="transform: scale(1);" class="px-7 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-extrabold text-base shadow-lg shadow-pink-400/40 transition-transform duration-200 cursor-pointer">
+                            Iya Dong! 💖
+                        </button>
+
+                        <!-- Tombol NGGAK (Akan berubah jadi position: absolute dan kabur) -->
+                        <button id="btn-no" onmouseover="dodgeNoButton(event)" ontouchstart="dodgeNoButton(event)" onclick="dodgeNoButton(event)" class="px-6 py-3 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-sm shadow transition-all duration-150 cursor-pointer">
+                            Nggak 😜
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB C: KUPON CINTA (LOVE COUPONS)
+        =========================================== -->
+        <section id="panel-kupon" class="tab-panel hidden animate-pop-in">
+            <div class="glass-card rounded-3xl p-6 sm:p-7">
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <h3 class="font-cute text-lg sm:text-xl font-bold text-gray-800">Dompet Kupon Cinta 🎟️</h3>
+                        <p class="text-xs text-gray-500">Klik kupon buat klaim, lalu screenshot kirim ke ayank!</p>
+                    </div>
+                    <button onclick="resetCoupons()" class="text-xs font-bold text-pink-600 hover:text-pink-700 bg-pink-100/80 px-3 py-1.5 rounded-xl transition">
+                        Reset Kupon
+                    </button>
+                </div>
+
+                <!-- Grid Kupon -->
+                <div id="coupons-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Di-render otomatis via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB D: CEK TINGKAT KEBUCINAN (LOVE METER)
+        =========================================== -->
+        <section id="panel-meter" class="tab-panel hidden animate-pop-in">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 text-center">
+                <span class="inline-block px-3 py-1 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mb-2">
+                    AI DETEKTOR PERASAAN 100% AKURAT
+                </span>
+                <h3 class="font-cute text-xl sm:text-2xl font-bold text-gray-800 mb-5">
+                    Seberapa Bucin Kalian Berdua? 🌡️💘
+                </h3>
+
+                <!-- Inputs Dua Nama -->
+                <div class="grid grid-cols-1 sm:grid-cols-11 gap-3 items-center mb-6">
+                    <div class="sm:col-span-5">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Nama Kamu</label>
+                        <input type="text" id="meter-name-1" placeholder="Nama kamu..." value="Aku" class="w-full px-4 py-3 rounded-2xl bg-white/85 border-2 border-pink-200 focus:border-pink-400 focus:outline-none text-center font-bold text-gray-700">
+                    </div>
+
+                    <div class="sm:col-span-1 flex justify-center text-2xl animate-pulse">
+                        💞
+                    </div>
+
+                    <div class="sm:col-span-5">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Nama Dia</label>
+                        <input type="text" id="meter-name-2" placeholder="Nama dia..." class="w-full px-4 py-3 rounded-2xl bg-white/85 border-2 border-purple-200 focus:border-purple-400 focus:outline-none text-center font-bold text-gray-700">
+                    </div>
+                </div>
+
+                <button onclick="calculateLoveMeter()" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-300/40 transition transform active:scale-95 mb-6">
+                    🔍 Scan Tingkat Kebucinan
+                </button>
+
+                <!-- Result Box -->
+                <div id="meter-result-box" class="hidden bg-white/85 border-2 border-pink-200 rounded-2xl p-6 text-center animate-pop-in">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Hasil Analisis Sistem</div>
+                    <div id="meter-percentage" class="font-cute text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 my-2">
+                        100%
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full h-4 bg-pink-100 rounded-full overflow-hidden p-0.5 mb-4 max-w-md mx-auto">
+                        <div id="meter-bar" class="h-full bg-gradient-to-r from-pink-400 via-rose-500 to-purple-500 rounded-full transition-all duration-1000 w-0"></div>
+                    </div>
+
+                    <div id="meter-status-badge" class="inline-block px-3.5 py-1 rounded-full bg-rose-100 text-rose-600 font-bold text-xs mb-2">
+                        STATUS: BUCIN STADIUM AKHIR 🚨
+                    </div>
+                    <p id="meter-reason" class="text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
+                        Kalian berdua tuh udah kayak sendok sama garpu, nggak bisa dipisahin! Kalau jauh dikit langsung kangen berat.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==========================================
+         JAVASCRIPT LOGIC & SOUND ENGINE
+    =========================================== -->
+    <script>
+        // --- 1. STATE MANAGEMENT ---
+        let partnerName = "Sayang";
+        let soundEnabled = true;
+        let audioCtx = null;
+        let currentGombalCategory = 'semua';
+        let currentGombalIndex = 0;
+        let yesScale = 1;
+        let currentTrapIndex = 0;
+
+        // --- 2. WEB AUDIO API (SOFT CUTE SOUND EFFECTS TANPA FILE EKSTERNAL) ---
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'pop') {
+                    // Suara 'pop' lembut saat klik tombol
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'boing') {
+                    // Suara lucu saat tombol 'Nggak' kabur
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(620, now + 0.14);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                } else if (type === 'win') {
+                    // Arpeggio ceria saat klaim kupon / klik Iya
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + idx * 0.07);
+                        g.gain.setValueAtTime(0.11, now + idx * 0.07);
+                        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.25);
+                        o.start(now + idx * 0.07);
+                        o.stop(now + idx * 0.07 + 0.26);
+                    });
+                }
+            } catch (e) {
+                // Abaikan jika browser memblokir audio sebelum interaksi
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-on-icon').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('sound-off-icon').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+            showToast(soundEnabled ? "Efek suara aktif 🔔" : "Efek suara dimatikan 🔕", soundEnabled ? "🎵" : "🔇");
+        }
+
+        // --- 3. FLOATING HEARTS BACKGROUND GENERATOR ---
+        function spawnFloatingHeart() {
+            const container = document.getElementById('floating-hearts-container');
+            const heart = document.createElement('div');
+            const icons = ['💖', '💕', '🌸', '✨', '💗', '💜', '🫶'];
+            heart.innerText = icons[Math.floor(Math.random() * icons.length)];
+            heart.className = 'bg-heart';
+            
+            const size = Math.random() * 18 + 14; // 14px - 32px
+            const left = Math.random() * 100; // 0% - 100%
+            const duration = Math.random() * 7 + 8; // 8s - 15s
+            
+            heart.style.fontSize = `${size}px`;
+            heart.style.left = `${left}vw`;
+            heart.style.animationDuration = `${duration}s`;
+            
+            container.appendChild(heart);
+            setTimeout(() => heart.remove(), duration * 1000);
+        }
+        setInterval(spawnFloatingHeart, 900);
+
+        // --- 4. CUSTOM TOAST NOTIFICATION ---
+        let toastTimeout;
+        function showToast(message, icon = "💖") {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-message').innerText = message;
+            document.getElementById('toast-icon').innerText = icon;
+            
+            toast.classList.remove('opacity-0', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2400);
+        }
+
+        // --- 5. WELCOME & PERSONALIZATION LOGIC ---
+        function startApp(event) {
+            event.preventDefault();
+            playSound('win');
+            const inputVal = document.getElementById('partner-name-input').value.trim();
+            partnerName = inputVal ? inputVal : "Sayang";
+            
+            updatePersonalizedTexts();
+            
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('edit-name-btn').classList.remove('hidden');
+            
+            renderGombalan(true);
+            renderCoupons();
+            triggerHeartConfetti(0.5);
+        }
+
+        function openWelcomeModal() {
+            playSound('pop');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('partner-name-input').value = partnerName === "Sayang" ? "" : partnerName;
+            document.getElementById('partner-name-input').focus();
+        }
+
+        function updatePersonalizedTexts() {
+            document.querySelectorAll('.target-name-display').forEach(el => {
+                el.innerText = partnerName;
+            });
+            document.getElementById('header-target-name').innerText = partnerName;
+            document.getElementById('meter-name-2').value = partnerName;
+            updateTrapQuestionUI();
+        }
+
+        // --- 6. TAB NAVIGATION ---
+        function switchTab(tabId) {
+            playSound('pop');
+            // Reset semua tombol tab
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-gradient-to-r', 'from-pink-500', 'to-rose-400', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-600', 'hover:bg-white/60');
+            });
+
+            // Aktifkan tombol tab yang dipilih
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-white/60');
+            activeBtn.classList.add('bg-gradient-to-r', 'from-pink-500', 'to-rose-400', 'text-white', 'shadow-md');
+
+            // Sembunyikan semua panel dan tampilkan yang dipilih
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            const activePanel = document.getElementById(`panel-${tabId}`);
+            activePanel.classList.remove('hidden');
+            
+            // Re-trigger pop animation
+            activePanel.classList.remove('animate-pop-in');
+            void activePanel.offsetWidth;
+            activePanel.classList.add('animate-pop-in');
+        }
+
+        // --- 7. FITUR A: GOMBALAN GENERATOR ---
+        const gombalanDatabase = [
+            { cat: 'receh', label: '🧀 Receh Abis', text: '{name}, kamu tahu nggak bedanya kamu sama WiFi? Kalau WiFi nyambungnya ke HP, kalau kamu nyambungnya langsung ke masa depan aku.' },
+            { cat: 'receh', label: '🧀 Receh Abis', text: 'Eh {name}, bapak kamu pasti tukang parkir ya? Soalnya tiap lihat kamu, hati aku langsung berhenti di tempat.' },
+            { cat: 'receh', label: '🧀 Receh Abis', text: '{name}, kalau aku jadi wakil rakyat kayaknya aku gagal deh. Gimana mau mikirin rakyat kalau di pikiran aku isinya cuma kamu doang?' },
+            { cat: 'receh', label: '🧀 Receh Abis', text: 'Tahu nggak kenapa donat tengahnya bolong, {name}? Karena yang utuh dan bulat cuma rasa sayang aku ke kamu.' },
+            { cat: 'puitis', label: '🌙 Puitis & Soft', text: 'Dari sekian banyak kebetulan di dunia ini, bertemu dan mengenal {name} adalah kebetulan yang paling ingin aku syukuri selamanya.' },
+            { cat: 'puitis', label: '🌙 Puitis & Soft', text: 'Kalau senja selalu punya cara untuk bikin langit indah, {name} selalu punya cara sederhana untuk bikin hari-hari aku tenang.' },
+            { cat: 'puitis', label: '🌙 Puitis & Soft', text: 'Aku nggak butuh peta buat nyari kebahagiaan, {name}. Cukup lihat notifikasi chat dari kamu aja, rumahku sudah ketemu.' },
+            { cat: 'puitis', label: '🌙 Puitis & Soft', text: 'Di antara riuhnya dunia yang kadang melelahkan, nama {name} selalu jadi jeda paling nyaman yang aku punya.' },
+            { cat: 'maut', label: '🔥 Rayuan Maut', text: '{name}, tolong jangan manis-manis banget dong senyumnya. Aku takut kena diabetes sebelum sempat halalin kamu.' },
+            { cat: 'maut', label: '🔥 Rayuan Maut', text: 'Kamu capek nggak sih, {name}? Soalnya dari pagi sampai malam kamu lari-larian terus di pikiran aku.' },
+            { cat: 'maut', label: '🔥 Rayuan Maut', text: 'Google Maps aja kalah akurat sama hati aku, {name}. Soalnya ke mana pun aku pergi, tujuannya selalu balik ke kamu.' },
+            { cat: 'maut', label: '🔥 Rayuan Maut', text: 'Boleh minta foto kamu nggak, {name}? Mau aku tunjukin ke temen-temenku kalau bidadari itu beneran ada di bumi.' }
+        ];
+
+        function setGombalCategory(cat) {
+            playSound('pop');
+            currentGombalCategory = cat;
+            document.querySelectorAll('.gombal-cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'gombal-cat-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-pink-500 text-white shadow-sm transition';
+                } else {
+                    btn.className = 'gombal-cat-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition';
+                }
+            });
+            generateGombalan();
+        }
+
+        function generateGombalan() {
+            playSound('pop');
+            renderGombalan(false);
+        }
+
+        function renderGombalan(instant = false) {
+            const filtered = currentGombalCategory === 'semua' 
+                ? gombalanDatabase 
+                : gombalanDatabase.filter(item => item.cat === currentGombalCategory);
+            
+            let nextItem;
+            do {
+                nextItem = filtered[Math.floor(Math.random() * filtered.length)];
+            } while (filtered.length > 1 && nextItem.text.replace('{name}', partnerName) === document.getElementById('gombal-text').innerText);
+
+            const cardBox = document.getElementById('gombal-card-box');
+            const textEl = document.getElementById('gombal-text');
+            const badgeEl = document.getElementById('gombal-badge');
+
+            const formattedText = `"${nextItem.text.replace(/{name}/g, partnerName)}"`;
+
+            if (instant) {
+                badgeEl.innerText = nextItem.label;
+                textEl.innerText = formattedText;
+            } else {
+                cardBox.classList.add('gombal-flip-out');
+                setTimeout(() => {
+                    badgeEl.innerText = nextItem.label;
+                    textEl.innerText = formattedText;
+                    cardBox.classList.remove('gombal-flip-out');
+                }, 180);
+            }
+        }
+
+        function copyGombalan() {
+            playSound('pop');
+            const text = document.getElementById('gombal-text').innerText;
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast("Gombalan tersalin! Gas kirim ke dia 💬", "📋");
+        }
+
+        // --- 8. FITUR B: PERTANYAAN JEBAKAN (TOMBOL KABUR) ---
+        const trapQuestions = [
+            {
+                emoji: "🥺👉👈",
+                q: "{name}, kamu sayang banget sama aku nggak?",
+                sub: "Jawab jujur ya, dilarang bohong!",
+                yesText: "Sayang Banget! 💖",
+                noText: "Nggak 😜",
+                winMsg: "Tuh kan, emang nggak ada pilihan lain selain sayang sama aku. Makasih udah jadi alasan senyum aku hari ini, {name}!"
+            },
+            {
+                emoji: "🧋🍔✨",
+                q: "{name}, minggu ini kita jalan & jajan bareng yuk?",
+                sub: "Kalau klik Iya, berarti fix berangkat!",
+                yesText: "Gas Yuk! 🛵",
+                noText: "Males ah 🙈",
+                winMsg: "Asiiik! Udah diklik Iya ya, nggak bisa dibatalin! Siapin perut & outfit terbaik kamu ya {name}!"
+            },
+            {
+                emoji: "💍🥺🌹",
+                q: "{name}, janji ya jangan pernah bosen sama aku?",
+                sub: "Coba aja klik tombol sebelah kalau berani...",
+                yesText: "Janji Dong! 🫶",
+                noText: "Bosen dikit 🏃",
+                winMsg: "Janji terkunci selamanya! Makasih selalu sabar dan selalu ada buat aku ya {name} 💕"
+            }
+        ];
+
+        const funnyNoTexts = [
+            "Eits nggak kena! 😜",
+            "Yakin nih? 🥺",
+            "Tombolnya rusak!",
+            "Klik yang pink aja!",
+            "Wlee kabur 🏃‍♂️",
+            "Gabisa diklik woi!",
+            "Coba lagi haha 😂"
+        ];
+
+        function changeTrapQuestion(idx) {
+            playSound('pop');
+            currentTrapIndex = idx;
+            document.querySelectorAll('.trap-q-btn').forEach((btn, i) => {
+                btn.className = i === idx 
+                    ? 'trap-q-btn px-3 py-1 rounded-full text-xs font-bold bg-purple-500 text-white transition'
+                    : 'trap-q-btn px-3 py-1 rounded-full text-xs font-bold bg-white/70 text-gray-600 hover:bg-white transition';
+            });
+            resetTrapArena();
+        }
+
+        function updateTrapQuestionUI() {
+            const item = trapQuestions[currentTrapIndex];
+            document.getElementById('trap-emoji').innerText = item.emoji;
+            document.getElementById('trap-question-text').innerText = item.q.replace(/{name}/g, partnerName);
+            document.getElementById('trap-subtext').innerText = item.sub;
+            document.getElementById('btn-yes').innerText = item.yesText;
+            document.getElementById('btn-no').innerText = item.noText;
+            document.getElementById('trap-success-msg').innerText = item.winMsg.replace(/{name}/g, partnerName);
+        }
+
+        function dodgeNoButton(e) {
+            if (e) e.preventDefault();
+            playSound('boing');
+            
+            const arena = document.getElementById('trap-arena');
+            const btnNo = document.getElementById('btn-no');
+            const btnYes = document.getElementById('btn-yes');
+
+            // Jadikan posisi tombol 'Nggak' absolute di dalam arena
+            btnNo.style.position = 'absolute';
+            btnNo.style.zIndex = '25';
+
+            // Hitung batas aman agar tombol tidak keluar dari kotak arena
+            const arenaRect = arena.getBoundingClientRect();
+            const btnWidth = btnNo.offsetWidth || 100;
+            const btnHeight = btnNo.offsetHeight || 44;
+
+            const maxX = Math.max(10, arenaRect.width - btnWidth - 16);
+            const maxY = Math.max(10, arenaRect.height - btnHeight - 16);
+
+            const randomX = Math.floor(Math.random() * maxX) + 8;
+            const randomY = Math.floor(Math.random() * maxY) + 8;
+
+            btnNo.style.left = `${randomX}px`;
+            btnNo.style.top = `${randomY}px`;
+            btnNo.innerText = funnyNoTexts[Math.floor(Math.random() * funnyNoTexts.length)];
+
+            // Perbesar tombol IYA setiap kali tombol Nggak kabur
+            yesScale = Math.min(yesScale + 0.14, 1.85);
+            btnYes.style.transform = `scale(${yesScale})`;
+        }
+
+        function handleYesClick() {
+            playSound('win');
+            document.getElementById('trap-success-box').classList.remove('hidden');
+            triggerHeartConfetti(1);
+        }
+
+        function resetTrapArena() {
+            yesScale = 1;
+            const btnYes = document.getElementById('btn-yes');
+            const btnNo = document.getElementById('btn-no');
+            
+            btnYes.style.transform = 'scale(1)';
+            btnNo.style.position = 'static';
+            btnNo.style.left = 'auto';
+            btnNo.style.top = 'auto';
+            
+            document.getElementById('trap-success-box').classList.add('hidden');
+            updateTrapQuestionUI();
+        }
+
+        // --- 9. FITUR C: KUPON CINTA (LOVE COUPONS) ---
+        let couponsData = [
+            { id: 1, emoji: "😇", title: "Bebas Ngambek 1x", desc: "Langsung dimaafin tanpa debat panjang lebar.", color: "from-pink-100 to-rose-50", claimed: false },
+            { id: 2, emoji: "🧋", title: "Jajanin Boba / Kopi", desc: "Berlaku untuk minuman favorit pilihanmu kapan aja.", color: "from-purple-100 to-indigo-50", claimed: false },
+            { id: 3, emoji: "📞", title: "Call Sampai Ketiduran", desc: "Temenin cerita ngalor-ngidul sampai kamu pules.", color: "from-amber-100 to-orange-50", claimed: false },
+            { id: 4, emoji: "🫂", title: "Peluk Virtual Tanpa Batas", desc: "Dapat diklaim setiap kali lagi capek atau kangen.", color: "from-rose-100 to-pink-50", claimed: false },
+            { id: 5, emoji: "🍜", title: "Bebas Pilih Tempat Makan", desc: "Nggak ada lagi drama jawab 'terserah' pas ditanya makan.", color: "from-emerald-100 to-teal-50", claimed: false },
+            { id: 6, emoji: "👑", title: "Mode Ratu / Raja Sehari", desc: "Semua permintaan manja diturutin seharian penuh!", color: "from-fuchsia-100 to-purple-50", claimed: false }
+        ];
+
+        function renderCoupons() {
+            const grid = document.getElementById('coupons-grid');
+            grid.innerHTML = couponsData.map(coupon => `
+                <div onclick="claimCoupon(${coupon.id})" class="relative cursor-pointer rounded-2xl bg-gradient-to-br ${coupon.color} border-2 border-dashed ${coupon.claimed ? 'border-gray-300 opacity-85' : 'border-pink-300 hover:border-pink-500 hover:-translate-y-1'} p-4 transition-all duration-200 shadow-sm select-none overflow-hidden">
+                    <!-- Cutout notches kiri & kanan ala tiket -->
+                    <div class="w-4 h-4 rounded-full bg-white/90 absolute -left-2 top-1/2 -translate-y-1/2"></div>
+                    <div class="w-4 h-4 rounded-full bg-white/90 absolute -right-2 top-1/2 -translate-y-1/2"></div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="text-3xl bg-white/80 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0">
+                            ${coupon.emoji}
+                        </div>
+                        <div class="text-left">
+                            <h4 class="font-cute font-bold text-gray-800 text-sm sm:text-base leading-snug">${coupon.title}</h4>
+                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">${coupon.desc}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-black/5 flex items-center justify-between text-[11px] font-bold">
+                        <span class="text-pink-600">Untuk: ${partnerName}</span>
+                        <span class="${coupon.claimed ? 'text-gray-400' : 'text-purple-600'}">
+                            ${coupon.claimed ? 'Sudah Diklaim ✓' : 'Klik untuk Klaim →'}
+                        </span>
+                    </div>
+
+                    <!-- Stempel CLAIMED -->
+                    ${coupon.claimed ? `
+                        <div class="absolute inset-0 bg-white/30 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                            <div class="animate-stamp border-4 border-rose-500 text-rose-600 font-extrabold text-xl tracking-widest px-4 py-1 rounded-xl bg-white/90 shadow-md">
+                                CLAIMED 💖
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function claimCoupon(id) {
+            const coupon = couponsData.find(c => c.id === id);
+            if (!coupon) return;
+            if (coupon.claimed) {
+                showToast("Kupon ini sudah diklaim! SS kirim ke ayank ya 📸", "🎟️");
+                return;
+            }
+            coupon.claimed = true;
+            playSound('win');
+            renderCoupons();
+            triggerHeartConfetti(0.6);
+            showToast(`Kupon "${coupon.title}" berhasil diklaim! 🎉`, "💖");
+        }
+
+        function resetCoupons() {
+            playSound('pop');
+            couponsData.forEach(c => c.claimed = false);
+            renderCoupons();
+            showToast("Semua kupon cinta siap dipakai lagi!", "✨");
+        }
+
+        // --- 10. FITUR D: CEK TINGKAT KEBUCINAN (LOVE METER) ---
+        const funnyLoveReasons = [
+            "Kalian berdua tuh udah kayak WiFi sama password-nya, nyambung terus dan bikin orang lain iri pengen konek!",
+            "Sensor sistem mendeteksi gelombang kangen tingkat tinggi! Dosis peluk dan jajan bareng harus segera diberikan.",
+            "Hasilnya OVERLOAD! Bahkan kalkulator cinta aja nggak kuat ngitung seberapa gemesnya kalian berdua kalau lagi chattan.",
+            "Tingkat kecocokan kalian setara sama mie instan + telur pas hujan-hujan: hangat, pas, dan nggak tergantikan!",
+            "Selamat! Kalian resmi masuk kategori Bucin Elit Global. Dilarang ngambek lama-lama karena kangennya lebih berat."
+        ];
+
+        function calculateLoveMeter() {
+            const name1 = document.getElementById('meter-name-1').value.trim() || "Aku";
+            const name2 = document.getElementById('meter-name-2').value.trim() || partnerName;
+
+            playSound('win');
+            
+            const resultBox = document.getElementById('meter-result-box');
+            const pctEl = document.getElementById('meter-percentage');
+            const barEl = document.getElementById('meter-bar');
+            const statusEl = document.getElementById('meter-status-badge');
+            const reasonEl = document.getElementById('meter-reason');
+
+            resultBox.classList.remove('hidden');
+            barEl.style.width = '0%';
+
+            // Hasil lucu selalu 100% sampai 999% (Overload)
+            const scores = ["100%", "1000%", "999% ∞", "100% FULL"];
+            const chosenScore = scores[Math.floor(Math.random() * scores.length)];
+            const chosenReason = funnyLoveReasons[Math.floor(Math.random() * funnyLoveReasons.length)];
+
+            setTimeout(() => {
+                barEl.style.width = '100%';
+                pctEl.innerText = chosenScore;
+                statusEl.innerText = `💖 ${name1.toUpperCase()} + ${name2.toUpperCase()} = BUCIN OVERLOAD 🚨`;
+                reasonEl.innerText = chosenReason;
+                triggerHeartConfetti(0.7);
+            }, 100);
+        }
+
+        // --- 11. CONFETTI HEART EFFECT ---
+        function triggerHeartConfetti(intensity = 1) {
+            if (typeof confetti !== 'function') return;
+            const colors = ['#FF8FAB', '#FB6F92', '#C084FC', '#F472B6', '#FFE4EC'];
+            confetti({
+                particleCount: Math.floor(55 * intensity),
+                spread: 75,
+                origin: { y: 0.65 },
+                colors: colors,
+                shapes: ['circle'],
+                scalar: 1.1
+            });
+        }
+    </script>
+</body>
+</html>
